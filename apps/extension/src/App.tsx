@@ -1,28 +1,33 @@
 import { useState } from "react";
 import "./index.css";
 import { Button } from "@repo/ui";
-import { createSolanaWalletInit, createSolanaAccount } from "@repo/wallet-core";
+// import { createSolanaWalletInit, createSolanaAccount } from "@repo/wallet-core";
+import { walletClient } from "@repo/wallet-core";
 
 function App() {
-  const [accountIndex, setAccountIndex] = useState(0);
-  const [mnemonic, setMnemonic] = useState("");
-  const [accounts, setAccounts] = useState<
-    {
-      publicKey: string;
-      secretKey: Uint8Array;
-    }[]
-  >([]);
+  const [walletId, setWalletId] = useState<string>("");
+  const [mnemonic, setMnemonic] = useState<string>("");
+  const [accounts, setAccounts] = useState<string[]>([]);
+  const [print, setPrint] = useState<string[]>([]);
 
-  const handleWalletCreation = () => {
+  const handlePrint = () => {
+    setPrint(accounts);
+  };
+
+  const handleWalletCreation = async () => {
     if (!mnemonic) {
-      const { mnemonic: newMnemonic, account } = createSolanaWalletInit();
+      const {
+        mnemonic: newMnemonic,
+        accounts,
+        walletId,
+      } = await walletClient.createHdWallet();
       setMnemonic(newMnemonic);
-      setAccounts((prev) => [...prev, account]);
+      setAccounts(accounts);
+      setWalletId(walletId);
     } else {
-      const { account } = createSolanaAccount(mnemonic, accountIndex);
-      setAccounts((prev) => [...prev, account]);
+      const { address } = await walletClient.addHdAccount(walletId);
+      setAccounts((prev) => [...prev, address]);
     }
-    setAccountIndex((prev) => prev + 1);
   };
 
   return (
@@ -41,12 +46,18 @@ function App() {
           accounts.map((account, index) => (
             <div key={index} className="flex flex-col gap-4">
               <p className="mb-2 mt-4">Public Key:</p>
-              <p className="text-lg font-bold">{account.publicKey}</p>
+              <p className="text-lg font-bold">{account}</p>
+            </div>
+          ))}
+      </div>
 
-              <p className="mb-2 mt-4">Secret Key:</p>
-              <p className="text-lg font-bold">
-                {Array.from(account?.secretKey || []).join(", ")}
-              </p>
+      <div>
+        <Button onClick={handlePrint}>Print Accounts</Button>
+        {print.length > 0 &&
+          print.map((account, index) => (
+            <div key={index} className="flex flex-col gap-4">
+              <p className="mb-2 mt-4">Print Key:</p>
+              <p className="text-lg font-bold">{account}</p>
             </div>
           ))}
       </div>

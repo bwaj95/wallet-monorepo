@@ -2,3 +2,8 @@ export * from "./src/core/mnemonic";
 export * from "./src/blockchains/solana/derive";
 export * from "./src/blockchains/solana/index";
 export * from "./src/index";
+export * from "./src/keyrings/SolanaKeyring";
+export * from "./src/keyrings/KeyringStore";
+export * from "./src/keyrings/types";
+export * from "./src/clients/types";
+export * from "./src/clients/walletClient";
