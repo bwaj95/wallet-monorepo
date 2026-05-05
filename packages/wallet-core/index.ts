@@ -7,3 +7,5 @@ export * from "./src/keyrings/KeyringStore";
 export * from "./src/keyrings/types";
 export * from "./src/clients/types";
 export * from "./src/clients/walletClient";
+export * from "./src/storage/types";
+export * from "./src/storage/extension";

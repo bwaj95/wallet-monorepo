@@ -44,7 +44,6 @@ class SolanaKeyringBase implements KeyringBase {
 
 export type HdKeyringJson = {
   mnemonic: string;
-  seed: string;
   derivationPaths: Array<string>;
   accountIndex?: number;
   walletIndex?: number;
@@ -98,8 +97,8 @@ export class SolanaHdKeyring extends SolanaKeyringBase implements HdKeyring {
   toJson(): HdKeyringJson {
     return {
       mnemonic: this.mnemonic,
-      seed: bs.encode(this.seed),
       derivationPaths: this.derivationPaths,
+      accountIndex: this.accountIndex,
     };
   }
 
@@ -107,16 +106,12 @@ export class SolanaHdKeyring extends SolanaKeyringBase implements HdKeyring {
     const index = this.accountIndex || 0;
     const path = SOLANA_DERIVATION_PATH_PATTERN.replace("x", index.toString());
 
-    const derived = derivePath(path, this.seed).key;
+    const keypair: SignKeyPair = this.deriveFromPath(path);
 
-    const keypair: SignKeyPair = nacl.sign.keyPair.fromSeed(derived);
-
-    this.keypairs.push(keypair);
-    this.derivationPaths.push(path);
-    this.accountIndex = this.accountIndex ? this.accountIndex + 1 : 1;
+    this.accountIndex = index + 1;
 
     return {
-      index,
+      index: this.accountIndex,
       address: bs.encode(keypair.publicKey),
     };
   }
@@ -131,5 +126,31 @@ export class SolanaHdKeyring extends SolanaKeyringBase implements HdKeyring {
     } else {
       return true;
     }
+  }
+
+  private deriveFromPath(path: string): SignKeyPair {
+    const derived = derivePath(path, this.seed).key;
+
+    const keypair: SignKeyPair = nacl.sign.keyPair.fromSeed(derived);
+
+    this.keypairs.push(keypair);
+    this.derivationPaths.push(path);
+
+    return keypair;
+  }
+
+  loadFromJson(json: HdKeyringJson) {
+    if (!validateMnemonic(json.mnemonic)) {
+      throw new Error("Invalid mnemonic in JSON");
+    }
+
+    json.derivationPaths.map((path) => {
+      this.deriveFromPath(path);
+    });
+    this.accountIndex = json.accountIndex;
+  }
+
+  toJsonString(): string {
+    return JSON.stringify(this.toJson());
   }
 }

@@ -51,4 +51,14 @@ export const walletClient = {
       walletId,
     });
   },
+
+  async getWallet() {
+    return sendMessage<{
+      mnemonic: string;
+      walletId: string;
+      accounts: string[];
+    }>({
+      type: "GET_WALLET",
+    });
+  },
 };

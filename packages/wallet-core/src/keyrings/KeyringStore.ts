@@ -1,3 +1,4 @@
+import { type WalletState } from "../storage/types";
 import {
   type HdKeyring,
   type KeyringBase,
@@ -57,7 +58,7 @@ class KeyringStore {
   }
 
   isInitialized() {
-    return this.keyrings.length === 0;
+    return this.keyrings.length > 0;
   }
 
   //   private getActiveKeyring(): KeyringBase | undefined {
@@ -102,6 +103,51 @@ class KeyringStore {
       walletId,
       index,
       address,
+    };
+  }
+
+  setState(state: WalletState) {
+    const keyrings = state.keyrings.map((kr) => {
+      const keyring = new SolanaHdKeyring(kr.mnemonic);
+      keyring.loadFromJson(kr);
+      return keyring;
+    });
+
+    this.keyrings = keyrings;
+    this.activeKeyringIndex = state.activeKeyringIndex;
+  }
+
+  getWalletState(): WalletState {
+    if (!this.isInitialized()) {
+      return {} as WalletState;
+    }
+
+    const walletState: WalletState = {
+      keyrings: this.keyrings.map((kr) => (kr as SolanaHdKeyring).toJson()),
+      activeKeyringIndex: this.activeKeyringIndex,
+      lastUpdated: Date.now(),
+    };
+
+    return walletState;
+  }
+
+  getWallet(): {
+    mnemonic: string;
+    walletId: string;
+    accounts: string[];
+  } {
+    if (!this.isInitialized()) {
+      return { mnemonic: "", walletId: "", accounts: [] };
+    }
+
+    const keyring = this.keyrings[this.activeKeyringIndex];
+    const uuid = (keyring as SolanaHdKeyring).getKeyringUuid();
+    const publicKeys = (keyring as SolanaHdKeyring).publicKeys();
+
+    return {
+      mnemonic: (keyring as SolanaHdKeyring).mnemonic,
+      walletId: uuid,
+      accounts: publicKeys,
     };
   }
 }

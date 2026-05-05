@@ -1,23 +1,30 @@
 import {
   generateMnemonic,
+  getWalletState,
   keyringStore,
+  updateWalletState,
   type Message,
   type Response,
+  type WalletState,
 } from "@repo/wallet-core";
 
 declare const chrome: any;
 
-chrome.runtime.onMessage.addListener(
-  (
-    message: Message,
-    _sender: any,
-    sendResponse: (response: Response) => void,
-  ) => {
-    handleMessage(message, sendResponse);
+function initEventListeners() {
+  // Initialize storage or any other necessary setup here
 
-    return true; // required for async response
-  },
-);
+  chrome.runtime.onMessage.addListener(
+    (
+      message: Message,
+      _sender: any,
+      sendResponse: (response: Response) => void,
+    ) => {
+      handleMessage(message, sendResponse);
+
+      return true; // required for async response
+    },
+  );
+}
 
 async function handleMessage(
   message: Message,
@@ -29,6 +36,9 @@ async function handleMessage(
         const mnemonic = generateMnemonic();
 
         const { walletId, accounts } = keyringStore.createHdWallet(mnemonic);
+
+        const walletState: WalletState = keyringStore.getWalletState();
+        await updateWalletState(walletState);
 
         sendResponse({
           success: true,
@@ -42,6 +52,9 @@ async function handleMessage(
           message.mnemonic,
         );
 
+        const walletState: WalletState = keyringStore.getWalletState();
+        await updateWalletState(walletState);
+
         sendResponse({
           success: true,
           data: { mnemonic, walletId, accounts },
@@ -54,11 +67,24 @@ async function handleMessage(
           message.walletId,
         );
 
+        const walletState: WalletState = keyringStore.getWalletState();
+        await updateWalletState(walletState);
+
         sendResponse({
           success: true,
           data: { walletId, index, address },
         });
 
+        break;
+      }
+
+      case "GET_WALLET": {
+        const wallet = keyringStore.getWallet();
+
+        sendResponse({
+          success: true,
+          data: wallet,
+        });
         break;
       }
 
@@ -75,3 +101,20 @@ async function handleMessage(
     });
   }
 }
+
+async function initStorage() {
+  const walletState: WalletState | null = await getWalletState();
+
+  if (walletState) {
+    keyringStore.setState(walletState);
+  }
+}
+
+async function init() {
+  initEventListeners();
+  await initStorage();
+}
+
+init().catch((err) => {
+  console.error("Failed to initialize background service:", err);
+});

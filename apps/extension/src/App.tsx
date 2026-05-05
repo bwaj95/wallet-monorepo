@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import "./index.css";
 import { Button } from "@repo/ui";
 // import { createSolanaWalletInit, createSolanaAccount } from "@repo/wallet-core";
@@ -9,6 +9,21 @@ function App() {
   const [mnemonic, setMnemonic] = useState<string>("");
   const [accounts, setAccounts] = useState<string[]>([]);
   const [print, setPrint] = useState<string[]>([]);
+
+  useEffect(() => {
+    const fetchWallet = async () => {
+      try {
+        const wallet = await walletClient.getWallet();
+        setMnemonic(wallet.mnemonic);
+        setWalletId(wallet.walletId);
+        setAccounts(wallet.accounts);
+      } catch (error) {
+        console.error("Error fetching wallet:", error);
+      }
+    };
+
+    fetchWallet();
+  }, []);
 
   const handlePrint = () => {
     setPrint(accounts);

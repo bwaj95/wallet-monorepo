@@ -26,6 +26,7 @@
     ".": "./index.ts"
   },
   "devDependencies": {
+    "@types/chrome": "^0.1.40",
     "@types/node": "^24.12.2"
   }
 }
