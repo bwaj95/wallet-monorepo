@@ -1,3 +1,4 @@
+import { type WalletInitializationState } from "../storage/types";
 import { type Message, type Response } from "./types";
 
 declare const chrome: any;
@@ -59,6 +60,36 @@ export const walletClient = {
       accounts: string[];
     }>({
       type: "GET_WALLET",
+    });
+  },
+
+  async clearWallet() {
+    return sendMessage<void>({
+      type: "CLEAR_WALLET",
+    });
+  },
+
+  async getWalletInitState() {
+    return sendMessage<WalletInitializationState>({
+      type: "GET_WALLET_INIT_STATE",
+    });
+  },
+
+  async setWalletPassword(password: string) {
+    return sendMessage<boolean>({
+      type: "SET_WALLET_PASSWORD",
+      password,
+    });
+  },
+
+  async unlockWallet(password: string) {
+    return sendMessage<{
+      mnemonic: string;
+      walletId: string;
+      accounts: string[];
+    } | null>({
+      type: "UNLOCK_WALLET",
+      password,
     });
   },
 };

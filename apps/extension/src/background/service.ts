@@ -1,7 +1,12 @@
 import {
+  clearWalletState,
   generateMnemonic,
-  getWalletState,
+  getWalletInitializationState,
+  // getWalletState,
+  initWalletPassword,
+  initWalletState,
   keyringStore,
+  unlockWallet,
   updateWalletState,
   type Message,
   type Response,
@@ -38,6 +43,7 @@ async function handleMessage(
         const { walletId, accounts } = keyringStore.createHdWallet(mnemonic);
 
         const walletState: WalletState = keyringStore.getWalletState();
+
         await updateWalletState(walletState);
 
         sendResponse({
@@ -88,6 +94,50 @@ async function handleMessage(
         break;
       }
 
+      case "CLEAR_WALLET": {
+        await clearWalletState();
+
+        break;
+      }
+
+      case "UNLOCK_WALLET": {
+        const walletState: WalletState | null = await unlockWallet(
+          message.password,
+        );
+
+        if (walletState) {
+          keyringStore.setState(walletState);
+        }
+
+        sendResponse({
+          success: true,
+          data: walletState,
+        });
+        break;
+      }
+
+      case "GET_WALLET_INIT_STATE": {
+        const initState = await getWalletInitializationState();
+
+        sendResponse({
+          success: true,
+          data: initState,
+        });
+        break;
+      }
+
+      case "SET_WALLET_PASSWORD": {
+        const { password } = message;
+
+        const success = await initWalletPassword(password);
+
+        sendResponse({
+          success: true,
+          data: success,
+        });
+        break;
+      }
+
       default:
         sendResponse({
           success: false,
@@ -102,17 +152,27 @@ async function handleMessage(
   }
 }
 
-async function initStorage() {
-  const walletState: WalletState | null = await getWalletState();
+// async function initStorage() {
+//   const walletState: WalletState | null = await getWalletState();
 
-  if (walletState) {
-    keyringStore.setState(walletState);
-  }
+//   if (walletState) {
+//     keyringStore.setState(walletState);
+//   }
+// }
+
+async function initWallet() {
+  await initWalletState();
 }
 
 async function init() {
-  initEventListeners();
-  await initStorage();
+  try {
+    initEventListeners();
+    await initWallet();
+    // await initStorage();
+    console.log("Background service initialized");
+  } catch (error) {
+    console.error("Failed to initialize background service:", error);
+  }
 }
 
 init().catch((err) => {

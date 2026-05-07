@@ -10,3 +10,9 @@ export interface WalletState {
   activeBlockchain?: BlockchainType;
   lastUpdated: number;
 }
+
+export type WalletInitializationState =
+  | "loading"
+  | "uninitialized"
+  | "initializing"
+  | "initialized";
