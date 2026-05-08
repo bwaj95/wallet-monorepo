@@ -15,4 +15,5 @@ export type WalletInitializationState =
   | "loading"
   | "uninitialized"
   | "initializing"
-  | "initialized";
+  | "initialized"
+  | "unlocked";

@@ -31,21 +31,10 @@ function App() {
     fetchWalletInitState();
   }, []);
 
-  // const handleFetchState = async () => {
-  //   try {
-  //     const initState = await walletClient.getWalletInitState();
-  //     console.log("wallet init state fetched: ", initState);
-  //     setWalletInitState(initState);
-  //   } catch (error) {
-  //     setError("Failed to fetch wallet initialization state.");
-  //   }
-  // };
-
   const handleWalletCreation = async (password?: string) => {
     if (!mnemonic) {
       if (!password) {
-        alert("Password is required to create a wallet");
-        return;
+        throw new Error("Password is required to create a wallet.");
       }
 
       console.log("attempting to setWalletPwd in handleWalletCreation App.tsx");
@@ -79,13 +68,16 @@ function App() {
 
   const handleWalletUnlock = async (password: string) => {
     try {
+      console.log("[handleWaletUnlock app.tsx]");
       const wallet = await walletClient.unlockWallet(password);
+      console.log("[handleWaletUnlock app.tsx] wallet fetched: ", wallet);
       if (wallet) {
+        console.log("[handleWaletUnlock app.tsx] wallet exists: ", wallet);
         setMnemonic(wallet.mnemonic);
         setAccounts(wallet.accounts);
         setWalletId(wallet.walletId);
-        setWalletInitState("initialized");
       }
+      setWalletInitState("unlocked");
     } catch (error) {
       setError("Failed to unlock wallet.");
     }
@@ -99,7 +91,10 @@ function App() {
     content = <Onboarding onComplete={handleWalletCreation} />;
   } else if (walletInitState === "initialized" && accounts.length === 0) {
     content = <Unlock onUnlock={handleWalletUnlock} />;
-  } else if (walletInitState === "initialized" && accounts.length > 0) {
+  } else if (
+    walletInitState === "unlocked" ||
+    (walletInitState === "initialized" && accounts.length > 0)
+  ) {
     content = (
       <Dashboard
         handleWalletCreation={handleWalletCreation}

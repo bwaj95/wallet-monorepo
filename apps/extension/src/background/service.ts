@@ -40,9 +40,12 @@ async function handleMessage(
       case "CREATE_HD_WALLET": {
         const mnemonic = generateMnemonic();
 
+        console.log("Mnemonic generated.");
         const { walletId, accounts } = keyringStore.createHdWallet(mnemonic);
+        console.log("wallet generated. fetching wallet state...");
 
         const walletState: WalletState = keyringStore.getWalletState();
+        console.log("wallet state fetched: ", walletState);
 
         await updateWalletState(walletState);
 
@@ -105,13 +108,16 @@ async function handleMessage(
           message.password,
         );
 
+        let wallet = null;
+
         if (walletState) {
           keyringStore.setState(walletState);
+          wallet = keyringStore.getWallet();
         }
 
         sendResponse({
           success: true,
-          data: walletState,
+          data: wallet,
         });
         break;
       }

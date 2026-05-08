@@ -13,7 +13,22 @@ export async function updateWalletState(
 ): Promise<void> {
   try {
     const result = await chrome.storage.local.get(STORAGE_KEY);
-    const currentState = (result[STORAGE_KEY] as WalletState) || {};
+
+    console.log("[updateWalletState] retrieved data: ", result[STORAGE_KEY]);
+
+    let currentState = {} as WalletState;
+
+    if (result[STORAGE_KEY]) {
+      const decrypted = await decryptData(
+        result[STORAGE_KEY],
+        sessionPassword!,
+      );
+
+      console.log("[updateWalletState] decrypted data: ", decrypted);
+
+      currentState = JSON.parse(decrypted) as WalletState;
+      console.log("[updateWalletState] current state: ", currentState);
+    }
 
     const updatedState = {
       ...currentState,
@@ -48,6 +63,7 @@ export async function unlockWallet(
 ): Promise<WalletState | null> {
   try {
     sessionPassword = password;
+    console.log("session password set in unlockWallet");
     const walletState = await getWalletState();
 
     return walletState;
@@ -71,8 +87,16 @@ export async function getWalletState(): Promise<WalletState | null> {
       );
     }
 
+    console.log("[getWalletState] encryptedData: ", encryptedData);
+
     const decryptedData = await decryptData(encryptedData, sessionPassword);
-    return JSON.parse(decryptedData) as WalletState;
+
+    console.log("[getWalletState] decryptedData: ", decryptedData);
+
+    const walletState = JSON.parse(decryptedData) as WalletState;
+    console.log("[getWalletState] walletState: ", walletState);
+
+    return walletState;
   } catch (error) {
     throw new Error(
       "[getWalletState] Failed to retrieve state from storage: " + error,
@@ -85,10 +109,15 @@ export async function initWalletState() {
     const currentState = await getWalletInitializationState();
 
     if (!currentState) {
-      await chrome.storage.local.set({
-        [WALLET_INITIALIZATION_STATE_KEY]: "uninitialized",
-      });
-      console.log("initWalletState set to uninitialized");
+      await clearWalletState();
+      return;
+    }
+
+    const walletStorage = await chrome.storage.local.get(STORAGE_KEY);
+    const encryptedData = walletStorage[STORAGE_KEY];
+
+    if (!encryptedData && currentState === "initialized") {
+      await clearWalletState();
       return;
     }
   } catch (error) {
