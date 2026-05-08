@@ -6,7 +6,8 @@ export type Message =
   | { type: "GET_WALLET_INIT_STATE" }
   | { type: "SET_WALLET_PASSWORD"; password: string }
   | { type: "CLEAR_WALLET" }
-  | { type: "UNLOCK_WALLET"; password: string };
+  | { type: "UNLOCK_WALLET"; password: string }
+  | { type: "GET_BALANCE"; address: string };
 
 export type Response =
   | { success: true; data: any }

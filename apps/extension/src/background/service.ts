@@ -1,6 +1,7 @@
 import {
   clearWalletState,
   generateMnemonic,
+  getBalance,
   getWalletInitializationState,
   // getWalletState,
   initWalletPassword,
@@ -140,6 +141,18 @@ async function handleMessage(
         sendResponse({
           success: true,
           data: success,
+        });
+        break;
+      }
+
+      case "GET_BALANCE": {
+        const { address } = message;
+
+        const balance = await getBalance(address);
+
+        sendResponse({
+          success: true,
+          data: balance,
         });
         break;
       }

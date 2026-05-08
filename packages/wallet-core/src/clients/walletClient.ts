@@ -92,4 +92,11 @@ export const walletClient = {
       password,
     });
   },
+
+  async getBalance(address: string) {
+    return sendMessage<number>({
+      type: "GET_BALANCE",
+      address,
+    });
+  },
 };
